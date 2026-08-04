@@ -10,4 +10,5 @@ export const store = configureStore({
         files: fileReducer,
         users: userReducer,
     },
+    devTools: process.env.NODE_ENV !== 'production',
 });

@@ -1,6 +1,7 @@
 // frontend/src/services/api.js
 import axios from 'axios';
 
+// Используем переменную окружения с fallback
 const API_URL = process.env.REACT_APP_API_URL || '/api';
 
 const api = axios.create({

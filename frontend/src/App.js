@@ -13,11 +13,20 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
     const dispatch = useDispatch();
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
 
     useEffect(() => {
         dispatch(checkAuth());
     }, [dispatch]);
+
+    // Показываем загрузку, пока проверяем аутентификацию
+    if (loading) {
+        return (
+            <div className="app">
+                <div className="loading">Загрузка приложения...</div>
+            </div>
+        );
+    }
 
     return (
         <Router>

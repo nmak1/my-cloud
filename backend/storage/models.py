@@ -24,12 +24,13 @@ class UserFile(models.Model):
         super().save(*args, **kwargs)
 
     def get_full_path(self):
-        return os.path.join(settings.MEDIA_ROOT, self.file_path, self.stored_name)
+        # Исправлено: правильное объединение путей
+        return os.path.join(settings.MEDIA_ROOT, str(self.file_path), str(self.stored_name))
 
     def get_download_url(self):
         from django.urls import reverse
         if self.is_shared and self.share_token:
-            return reverse('storage:shared_download', kwargs={'token': self.share_token})
+            return reverse('storage:shared_download', kwargs={'token': str(self.share_token)})
         return reverse('storage:download_file', kwargs={'file_id': self.id})
 
     class Meta:
