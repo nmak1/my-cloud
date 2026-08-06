@@ -12,4 +12,5 @@ urlpatterns = [
     path('users/<int:user_id>/', views.delete_user, name='delete_user'),
     path('users/<int:user_id>/admin/', views.update_user_admin, name='update_admin'),
     path('me/', views.get_current_user, name='current_user'),
+    path('csrf/', views.get_csrf_token, name='csrf'),
 ]

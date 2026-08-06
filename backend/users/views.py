@@ -1,20 +1,21 @@
 # backend/users/views.py
+import logging
+
+from api.serializers import UserSerializer, UserCreateSerializer
+from django.contrib.auth import login, logout
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.hashers import check_password
-from api.serializers import UserSerializer, UserCreateSerializer
 from users.models import User
-from storage.models import UserFile
-from django.db.models import Sum, Count
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
+@csrf_exempt
 def register_user(request):
     """Регистрация нового пользователя"""
     logger.info(f"Registration attempt: {request.data.get('username')}")
@@ -31,6 +32,8 @@ def register_user(request):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
+@csrf_exempt
 def login_user(request):
     """Аутентификация пользователя"""
     username = request.data.get('username')
@@ -45,7 +48,7 @@ def login_user(request):
 
     try:
         user = User.objects.get(username=username)
-        if not check_password(password, user.password):
+        if not user.check_password(password):
             logger.warning(f"Invalid password for user: {username}")
             return Response({
                 'error': 'Неверный логин или пароль'
@@ -77,6 +80,14 @@ def logout_user(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def get_current_user(request):
+    """Получение информации о текущем пользователе"""
+    user_data = UserSerializer(request.user).data
+    return Response(user_data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_users(request):
     """Получение списка пользователей (только для администраторов)"""
     if not request.user.is_admin:
@@ -86,22 +97,10 @@ def get_users(request):
         }, status=status.HTTP_403_FORBIDDEN)
 
     users = User.objects.all().order_by('-created_at')
-    result = []
-
-    for user in users:
-        user_data = UserSerializer(user).data
-        # Получаем статистику по файлам
-        file_stats = UserFile.objects.filter(user=user).aggregate(
-            count=Count('id'),
-            total_size=Sum('file_size')
-        )
-        user_data['file_count'] = file_stats['count'] or 0
-        user_data['total_size'] = file_stats['total_size'] or 0
-        user_data['total_size_mb'] = round((file_stats['total_size'] or 0) / (1024 * 1024), 2)
-        result.append(user_data)
+    serializer = UserSerializer(users, many=True)
 
     logger.info(f"Users list retrieved by admin: {request.user.username}")
-    return Response(result)
+    return Response(serializer.data)
 
 
 @api_view(['DELETE'])
@@ -109,7 +108,6 @@ def get_users(request):
 def delete_user(request, user_id):
     """Удаление пользователя (только для администраторов)"""
     if not request.user.is_admin:
-        logger.warning(f"Non-admin user attempted to delete user: {request.user.username}")
         return Response({
             'error': 'Доступ запрещен'
         }, status=status.HTTP_403_FORBIDDEN)
@@ -169,15 +167,8 @@ def update_user_admin(request, user_id):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_current_user(request):
-    """Получение информации о текущем пользователе"""
-    user_data = UserSerializer(request.user).data
-    file_stats = UserFile.objects.filter(user=request.user).aggregate(
-        count=Count('id'),
-        total_size=Sum('file_size')
-    )
-    user_data['file_count'] = file_stats['count'] or 0
-    user_data['total_size'] = file_stats['total_size'] or 0
-    user_data['total_size_mb'] = round((file_stats['total_size'] or 0) / (1024 * 1024), 2)
-    return Response(user_data)
+@permission_classes([AllowAny])
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    """Получение CSRF токена"""
+    return Response({'detail': 'CSRF cookie set'})

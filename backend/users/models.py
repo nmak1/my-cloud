@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 import re
 
+
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
@@ -38,3 +39,8 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+    def check_password(self, raw_password):
+        """Метод для проверки пароля"""
+        from django.contrib.auth.hashers import check_password
+        return check_password(raw_password, self.password)

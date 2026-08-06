@@ -28,8 +28,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Должен быть самым первым
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -43,7 +43,7 @@ ROOT_URLCONF = 'mycloud.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -58,8 +58,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mycloud.wsgi.application'
 
-# Database
-
 # Database - используем SQLite для разработки
 DATABASES = {
     'default': {
@@ -67,17 +65,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('DB_NAME', 'mycloud_db'),
-#         'USER': os.getenv('DB_USER', 'postgres'),
-#         'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-#         'HOST': os.getenv('DB_HOST', 'localhost'),
-#         'PORT': os.getenv('DB_PORT', '5432'),
-#     }
-# }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -104,24 +91,36 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.getenv('MEDIA_ROOT', BASE_DIR / 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Custom settings
-FILE_STORAGE_PATH = os.getenv('FILE_STORAGE_PATH', MEDIA_ROOT / 'storage')
+FILE_STORAGE_PATH = MEDIA_ROOT / 'storage'
 
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS settings - ИСПРАВЛЕНО!
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True  # Для разработки
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400  # 24 hours
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False
 
 # Logging
 LOGGING = {
@@ -142,18 +141,6 @@ LOGGING = {
     'root': {
         'handlers': ['console'],
         'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'api': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
     },
 }
 
