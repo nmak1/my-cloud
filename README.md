@@ -46,7 +46,7 @@
 
 #### 1. Клонирование репозитория
 ```bash
-git clone https://github.com/yourusername/my-cloud.git
+git clone https://github.com/nmak1/my-cloud.git
 cd my-cloud
 ```
 2. Настройка бэкенда
@@ -85,6 +85,23 @@ docker-compose up -d
 
 Бэкенд API: http://localhost:8000/api
 ```
+Настройка Nginx
+```bash
+sudo cp nginx/mycloud.conf /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/mycloud /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+Настройка Gunicorn (Supervisor)
+```bash
+sudo cp supervisor/gunicorn.conf /etc/supervisor/conf.d/
+sudo supervisorctl reread
+sudo supervisorctl update
+```
+Адрес приложения  
+ http://31.31.201.166/  
+http://31.31.201.166/admin/
+
 Структура проекта
 ```text
 my-cloud/
