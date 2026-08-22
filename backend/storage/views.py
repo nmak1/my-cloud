@@ -111,7 +111,7 @@ def upload_file(request):
         user=user,
         original_name=uploaded_file.name,
         stored_name=stored_name,
-        file_path=f"storage/{user.storage_path}",
+        file_path=user.storage_path,
         file_size=uploaded_file.size,
         comment=comment
     )
@@ -131,24 +131,38 @@ def delete_file(request, file_id):
             'error': 'Файл не найден'
         }, status=status.HTTP_404_NOT_FOUND)
 
-    # Проверка прав доступа
     if user_file.user != request.user and not request.user.is_admin:
         return Response({
             'error': 'Доступ запрещен'
         }, status=status.HTTP_403_FORBIDDEN)
 
-    # Удаляем файл с диска
+    # Сначала удаляем файл с диска, только потом из БД
+    file_deleted = False
     try:
-        if os.path.exists(user_file.get_full_path()):
-            os.remove(user_file.get_full_path())
+        file_path = user_file.get_full_path()
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            file_deleted = True
+        else:
+            # Файл уже удален, просто удаляем запись
+            file_deleted = True
     except Exception as e:
         logger.error(f"Error deleting file: {str(e)}")
+        return Response({
+            'error': f'Ошибка при удалении файла: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    user_file.delete()
-    logger.info(f"File deleted: {user_file.original_name} by {request.user.username}")
-    return Response({
-        'message': 'Файл успешно удален'
-    })
+    # Удаляем запись из БД только если файл удален или не существует
+    if file_deleted:
+        user_file.delete()
+        logger.info(f"File deleted: {user_file.original_name} by {request.user.username}")
+        return Response({
+            'message': 'Файл успешно удален'
+        })
+    else:
+        return Response({
+            'error': 'Не удалось удалить файл'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['PATCH'])

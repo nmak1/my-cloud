@@ -91,7 +91,6 @@ def get_current_user(request):
 def get_users(request):
     """Получение списка пользователей (только для администраторов)"""
     if not request.user.is_admin:
-        logger.warning(f"Non-admin user attempted to get users list: {request.user.username}")
         return Response({
             'error': 'Доступ запрещен'
         }, status=status.HTTP_403_FORBIDDEN)
@@ -99,7 +98,6 @@ def get_users(request):
     users = User.objects.all().order_by('-created_at')
     serializer = UserSerializer(users, many=True)
 
-    logger.info(f"Users list retrieved by admin: {request.user.username}")
     return Response(serializer.data)
 
 

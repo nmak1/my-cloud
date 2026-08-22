@@ -330,3 +330,12 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm
+# Archives
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Backup
+backup/
+*.backup

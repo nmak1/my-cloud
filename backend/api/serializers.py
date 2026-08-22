@@ -2,13 +2,31 @@
 from rest_framework import serializers
 from users.models import User
 from storage.models import UserFile
-import os
+from django.db.models import Count, Sum
+
 
 class UserSerializer(serializers.ModelSerializer):
+    file_count = serializers.SerializerMethodField()
+    total_size = serializers.SerializerMethodField()
+    total_size_mb = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'full_name', 'is_admin', 'created_at', 'storage_path']
+        fields = [
+            'id', 'username', 'email', 'full_name', 'is_admin',
+            'created_at', 'storage_path', 'file_count', 'total_size', 'total_size_mb'
+        ]
         read_only_fields = ['id', 'created_at', 'storage_path']
+
+    def get_file_count(self, obj):
+        return obj.files.count()
+
+    def get_total_size(self, obj):
+        return obj.files.aggregate(total=Sum('file_size'))['total'] or 0
+
+    def get_total_size_mb(self, obj):
+        total = self.get_total_size(obj)
+        return round(total / (1024 * 1024), 2) if total else 0
 
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
