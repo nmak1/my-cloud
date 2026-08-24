@@ -92,26 +92,30 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 FILE_STORAGE_PATH = MEDIA_ROOT / 'storage'
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://31.31.201.166",
-    "https://test.thefayzullin.ru",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = False
-
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
-    "http://31.31.201.166",
     "https://test.thefayzullin.ru",
+    "http://31.31.201.166",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = True  # Для HTTPS
+
 SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = True  # Для HTTPS
+SESSION_COOKIE_HTTPONLY = True
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "https://test.thefayzullin.ru",
+    "http://31.31.201.166",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'

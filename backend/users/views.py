@@ -9,9 +9,16 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from users.models import User
+from django.middleware.csrf import get_token
 
 logger = logging.getLogger(__name__)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_csrf_token(request):
+    """Получение CSRF токена"""
+    token = get_token(request)
+    return Response({'csrfToken': token})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
