@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@ensure_csrf_cookie
 def get_csrf_token(request):
     """Получение CSRF токена"""
     token = get_token(request)
@@ -36,7 +37,6 @@ def register_user(request):
         }, status=status.HTTP_201_CREATED)
     logger.warning(f"Registration failed: {serializer.errors}")
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -73,9 +73,9 @@ def login_user(request):
         'user': UserSerializer(user).data
     })
 
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@csrf_exempt
 def logout_user(request):
     """Выход пользователя из системы"""
     logger.info(f"User logged out: {request.user.username}")
@@ -84,14 +84,12 @@ def logout_user(request):
         'message': 'Выход выполнен успешно'
     })
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_current_user(request):
     """Получение информации о текущем пользователе"""
     user_data = UserSerializer(request.user).data
     return Response(user_data)
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -106,7 +104,6 @@ def get_users(request):
     serializer = UserSerializer(users, many=True)
 
     return Response(serializer.data)
-
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -134,7 +131,6 @@ def delete_user(request, user_id):
         return Response({
             'error': 'Пользователь не найден'
         }, status=status.HTTP_404_NOT_FOUND)
-
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
@@ -169,11 +165,3 @@ def update_user_admin(request, user_id):
         return Response({
             'error': 'Пользователь не найден'
         }, status=status.HTTP_404_NOT_FOUND)
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-@ensure_csrf_cookie
-def get_csrf_token(request):
-    """Получение CSRF токена"""
-    return Response({'detail': 'CSRF cookie set'})

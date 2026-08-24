@@ -1,3 +1,4 @@
+// frontend/src/services/api.js
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || '/api';
@@ -11,9 +12,7 @@ const api = axios.create({
     },
 });
 
-// Перехватчик для CSRF токена
 api.interceptors.request.use(async (config) => {
-    // Для не-GET запросов получаем CSRF токен
     if (config.method !== 'get') {
         try {
             const response = await axios.get('/api/auth/csrf/', {
@@ -28,7 +27,6 @@ api.interceptors.request.use(async (config) => {
     return config;
 });
 
-// Перехватчик для обработки ошибок
 api.interceptors.response.use(
     (response) => response,
     (error) => {

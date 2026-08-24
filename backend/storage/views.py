@@ -7,6 +7,7 @@ from django.http import FileResponse, Http404
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from api.serializers import (
     FileSerializer, FileUploadSerializer,
     FileRenameSerializer, FileCommentSerializer,
@@ -34,7 +35,7 @@ def get_user_storage(request, username=None):
 
 def ensure_storage_path(user):
     """Создание директории для хранения файлов пользователя"""
-    path = os.path.join(settings.FILE_STORAGE_PATH, user.storage_path)
+    path = os.path.join(settings.MEDIA_ROOT, user.storage_path)
     os.makedirs(path, exist_ok=True)
     return path
 
@@ -65,6 +66,7 @@ def list_files(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@csrf_exempt
 def upload_file(request):
     """Загрузка файла в хранилище"""
     serializer = FileUploadSerializer(data=request.data)
@@ -87,15 +89,12 @@ def upload_file(request):
             'error': 'Доступ запрещен'
         }, status=status.HTTP_403_FORBIDDEN)
 
-    # Создаем директорию пользователя
     storage_path = ensure_storage_path(user)
 
-    # Генерируем уникальное имя файла
     file_extension = os.path.splitext(uploaded_file.name)[1]
     stored_name = f"{uuid.uuid4().hex}{file_extension}"
     file_path = os.path.join(storage_path, stored_name)
 
-    # Сохраняем файл
     try:
         with open(file_path, 'wb+') as destination:
             for chunk in uploaded_file.chunks():
@@ -106,7 +105,6 @@ def upload_file(request):
             'error': 'Ошибка при сохранении файла'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # Создаем запись в БД
     user_file = UserFile.objects.create(
         user=user,
         original_name=uploaded_file.name,
@@ -122,6 +120,7 @@ def upload_file(request):
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
+@csrf_exempt
 def delete_file(request, file_id):
     """Удаление файла из хранилища"""
     try:
@@ -136,7 +135,6 @@ def delete_file(request, file_id):
             'error': 'Доступ запрещен'
         }, status=status.HTTP_403_FORBIDDEN)
 
-    # Сначала удаляем файл с диска, только потом из БД
     file_deleted = False
     try:
         file_path = user_file.get_full_path()
@@ -144,7 +142,6 @@ def delete_file(request, file_id):
             os.remove(file_path)
             file_deleted = True
         else:
-            # Файл уже удален, просто удаляем запись
             file_deleted = True
     except Exception as e:
         logger.error(f"Error deleting file: {str(e)}")
@@ -152,7 +149,6 @@ def delete_file(request, file_id):
             'error': f'Ошибка при удалении файла: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # Удаляем запись из БД только если файл удален или не существует
     if file_deleted:
         user_file.delete()
         logger.info(f"File deleted: {user_file.original_name} by {request.user.username}")
@@ -167,6 +163,7 @@ def delete_file(request, file_id):
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
+@csrf_exempt
 def rename_file(request, file_id):
     """Переименование файла"""
     try:
@@ -195,6 +192,7 @@ def rename_file(request, file_id):
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
+@csrf_exempt
 def update_comment(request, file_id):
     """Изменение комментария к файлу"""
     try:
@@ -222,6 +220,7 @@ def update_comment(request, file_id):
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
+@csrf_exempt
 def share_file(request, file_id):
     """Управление публичным доступом к файлу"""
     try:
@@ -259,7 +258,6 @@ def download_shared_file(request, token):
     except UserFile.DoesNotExist:
         raise Http404("Файл не найден")
 
-    # Обновляем дату последнего скачивания
     user_file.last_downloaded_at = timezone.now()
     user_file.save()
 

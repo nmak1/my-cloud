@@ -1,3 +1,4 @@
+# backend/mycloud/settings.py
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -12,7 +13,6 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -92,22 +92,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 FILE_STORAGE_PATH = MEDIA_ROOT / 'storage'
 
-# CSRF settings
-CSRF_TRUSTED_ORIGINS = [
-    "https://test.thefayzullin.ru",
-    "http://31.31.201.166",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = True  # Для HTTPS
-
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = True  # Для HTTPS
-SESSION_COOKIE_HTTPONLY = True
-
-# CORS settings
 CORS_ALLOWED_ORIGINS = [
     "https://test.thefayzullin.ru",
     "http://31.31.201.166",
@@ -117,12 +101,21 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
 
-# Session settings
+CSRF_TRUSTED_ORIGINS = [
+    "https://test.thefayzullin.ru",
+    "http://31.31.201.166",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = True
+
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
 
 LOGGING = {
     'version': 1,
@@ -148,12 +141,10 @@ LOGGING = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
-# Security headers
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# HTTPS настройки (включены для продакшн)
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -162,4 +153,3 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
