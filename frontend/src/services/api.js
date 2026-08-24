@@ -12,13 +12,19 @@ const api = axios.create({
     },
 });
 
+// Получение CSRF токена
+let csrfToken = null;
+
 api.interceptors.request.use(async (config) => {
+    // Для не-GET запросов получаем и добавляем CSRF токен
     if (config.method !== 'get') {
         try {
-            const response = await axios.get('/api/auth/csrf/', {
-                withCredentials: true,
-            });
-            const csrfToken = response.data.csrfToken;
+            if (!csrfToken) {
+                const response = await axios.get('/api/auth/csrf/', {
+                    withCredentials: true,
+                });
+                csrfToken = response.data.csrfToken;
+            }
             config.headers['X-CSRFToken'] = csrfToken;
         } catch (error) {
             console.error('Error fetching CSRF token:', error);
