@@ -1,19 +1,20 @@
-# docker-compose.yml
 version: '3.8'
 
 services:
   db:
     image: postgres:15
+    container_name: mycloud_db
+    restart: always
     environment:
-      POSTGRES_DB: mycloud_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${DB_NAME:-mycloud_db}
+      POSTGRES_USER: ${DB_USER:-mycloud_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mycloud_user}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,16 +22,18 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: frontend/Dockerfile
+      dockerfile: Dockerfile
+    container_name: mycloud_backend
+    restart: always
     environment:
-      - DEBUG=1
-      - DB_NAME=mycloud_db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-change-this}
+      - DB_NAME=${DB_NAME:-mycloud_db}
+      - DB_USER=${DB_USER:-mycloud_user}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_HOST=db
       - DB_PORT=5432
-      - SECRET_KEY=your-secret-key-here-change-in-production
-      - FILE_STORAGE_PATH=/app/media/storage
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost}
     volumes:
       - ./backend:/app
       - media_volume:/app/media
@@ -39,19 +42,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn --workers 3 --bind 0.0.0.0:8000 mycloud.wsgi:application
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: frontend/Dockerfile
+      dockerfile: Dockerfile
+    container_name: mycloud_frontend
+    restart: always
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-/api}
     volumes:
       - ./frontend:/app
       - /app/node_modules
     ports:
       - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=/api
     depends_on:
       - backend
     command: npm start
